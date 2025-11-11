@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, PaymentStatus } from './payment.entity';
@@ -64,7 +68,7 @@ export class PaymentService {
   }
 
   async createPayment(dto: CreatePaymentDto): Promise<Payment> {
-    // TODO: Implement actual payment processing logic
+    // Mock implementation - In production, integrate with payment gateway
     const payment = this.repo.create({
       ...dto,
       status: PaymentStatus.PAID,
@@ -85,7 +89,7 @@ export class PaymentService {
       where: { status: PaymentStatus.PENDING },
     });
 
-    // TODO: Implement actual payment processing logic
+    // Mock implementation - In production, process each payment through payment gateway
     const processedPayments = pendingPayments.map((payment) => {
       payment.status = PaymentStatus.PAID;
       return payment;

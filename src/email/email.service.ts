@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Email } from './email.entity';
@@ -33,7 +37,7 @@ export class EmailService {
       throw new BadRequestException('Message is required');
     }
 
-    // TODO: Implement actual email sending logic
+    // Mock implementation - In production, integrate with email service (SendGrid, AWS SES, etc.)
     const email = this.repo.create(dto);
     return this.repo.save(email);
   }

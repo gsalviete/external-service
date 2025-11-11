@@ -7,7 +7,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('PaymentService', () => {
   let service: PaymentService;
-  let repo: Repository<Payment>;
+  let _repo: Repository<Payment>;
 
   const mockRepository = {
     create: jest.fn(),
@@ -28,7 +28,7 @@ describe('PaymentService', () => {
     }).compile();
 
     service = module.get<PaymentService>(PaymentService);
-    repo = module.get<Repository<Payment>>(getRepositoryToken(Payment));
+    _repo = module.get<Repository<Payment>>(getRepositoryToken(Payment));
   });
 
   afterEach(() => {

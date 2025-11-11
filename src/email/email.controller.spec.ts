@@ -63,8 +63,12 @@ describe('EmailController', () => {
         new BadRequestException('Invalid email format'),
       );
 
-      await expect(controller.sendEmail(dto)).rejects.toThrow(BadRequestException);
-      await expect(controller.sendEmail(dto)).rejects.toThrow('Invalid email format');
+      await expect(controller.sendEmail(dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.sendEmail(dto)).rejects.toThrow(
+        'Invalid email format',
+      );
     });
 
     it('should handle empty email error', async () => {
@@ -78,7 +82,9 @@ describe('EmailController', () => {
         new BadRequestException('Email is required'),
       );
 
-      await expect(controller.sendEmail(dto)).rejects.toThrow('Email is required');
+      await expect(controller.sendEmail(dto)).rejects.toThrow(
+        'Email is required',
+      );
     });
 
     it('should handle empty subject error', async () => {
@@ -92,7 +98,9 @@ describe('EmailController', () => {
         new BadRequestException('Subject is required'),
       );
 
-      await expect(controller.sendEmail(dto)).rejects.toThrow('Subject is required');
+      await expect(controller.sendEmail(dto)).rejects.toThrow(
+        'Subject is required',
+      );
     });
 
     it('should handle empty message error', async () => {
@@ -106,7 +114,9 @@ describe('EmailController', () => {
         new BadRequestException('Message is required'),
       );
 
-      await expect(controller.sendEmail(dto)).rejects.toThrow('Message is required');
+      await expect(controller.sendEmail(dto)).rejects.toThrow(
+        'Message is required',
+      );
     });
   });
 });

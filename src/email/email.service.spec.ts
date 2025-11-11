@@ -7,7 +7,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('EmailService', () => {
   let service: EmailService;
-  let repo: Repository<Email>;
+  let _repo: Repository<Email>;
 
   const mockRepository = {
     create: jest.fn(),
@@ -28,7 +28,7 @@ describe('EmailService', () => {
     }).compile();
 
     service = module.get<EmailService>(EmailService);
-    repo = module.get<Repository<Email>>(getRepositoryToken(Email));
+    _repo = module.get<Repository<Email>>(getRepositoryToken(Email));
   });
 
   afterEach(() => {
@@ -67,7 +67,9 @@ describe('EmailService', () => {
       };
 
       await expect(service.sendEmail(dto)).rejects.toThrow(BadRequestException);
-      await expect(service.sendEmail(dto)).rejects.toThrow('Invalid email format');
+      await expect(service.sendEmail(dto)).rejects.toThrow(
+        'Invalid email format',
+      );
     });
 
     it('should throw BadRequestException for empty email', async () => {
@@ -89,7 +91,9 @@ describe('EmailService', () => {
       };
 
       await expect(service.sendEmail(dto)).rejects.toThrow(BadRequestException);
-      await expect(service.sendEmail(dto)).rejects.toThrow('Subject is required');
+      await expect(service.sendEmail(dto)).rejects.toThrow(
+        'Subject is required',
+      );
     });
 
     it('should throw BadRequestException for empty message', async () => {
@@ -100,7 +104,9 @@ describe('EmailService', () => {
       };
 
       await expect(service.sendEmail(dto)).rejects.toThrow(BadRequestException);
-      await expect(service.sendEmail(dto)).rejects.toThrow('Message is required');
+      await expect(service.sendEmail(dto)).rejects.toThrow(
+        'Message is required',
+      );
     });
 
     it('should throw BadRequestException for whitespace-only subject', async () => {
@@ -111,7 +117,9 @@ describe('EmailService', () => {
       };
 
       await expect(service.sendEmail(dto)).rejects.toThrow(BadRequestException);
-      await expect(service.sendEmail(dto)).rejects.toThrow('Subject is required');
+      await expect(service.sendEmail(dto)).rejects.toThrow(
+        'Subject is required',
+      );
     });
 
     it('should throw BadRequestException for whitespace-only message', async () => {
@@ -122,7 +130,9 @@ describe('EmailService', () => {
       };
 
       await expect(service.sendEmail(dto)).rejects.toThrow(BadRequestException);
-      await expect(service.sendEmail(dto)).rejects.toThrow('Message is required');
+      await expect(service.sendEmail(dto)).rejects.toThrow(
+        'Message is required',
+      );
     });
   });
 
