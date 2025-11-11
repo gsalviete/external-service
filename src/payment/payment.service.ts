@@ -54,4 +54,9 @@ export class PaymentService {
     // TODO: Implement actual credit card validation logic
     return { valid: true };
   }
+
+  async processCharge(chargeData: any): Promise<Payment> {
+    // TODO: Implement charge processing logic
+    throw new Error('Not implemented');
+  }
 }
