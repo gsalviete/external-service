@@ -131,7 +131,7 @@ describe('PaymentController', () => {
   });
 
   describe('validateCreditCard', () => {
-    it('should validate credit card', async () => {
+    it('should validate credit card', () => {
       const cardData = {
         numero: '1234567890123456',
         nomeTitular: 'Test User',
@@ -139,9 +139,9 @@ describe('PaymentController', () => {
         cvv: '123',
       };
 
-      mockPaymentService.validateCreditCard.mockResolvedValue({ valid: true });
+      mockPaymentService.validateCreditCard.mockReturnValue({ valid: true });
 
-      const result = await controller.validateCreditCard(cardData);
+      const result = controller.validateCreditCard(cardData);
 
       expect(service.validateCreditCard).toHaveBeenCalledWith(cardData);
       expect(result).toEqual({ valid: true });
@@ -182,7 +182,7 @@ describe('CardController', () => {
   });
 
   describe('POST /cartaoDeCredito/validarCartaoDeCredito', () => {
-    it('should validate valid credit card successfully', async () => {
+    it('should validate valid credit card successfully', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
@@ -190,15 +190,15 @@ describe('CardController', () => {
         cvv: '123',
       };
 
-      mockPaymentService.validateCreditCard.mockResolvedValue({ valid: true });
+      mockPaymentService.validateCreditCard.mockReturnValue({ valid: true });
 
-      const result = await controller.validateCard(cardData);
+      const result = controller.validateCard(cardData);
 
       expect(service.validateCreditCard).toHaveBeenCalledWith(cardData);
       expect(result).toEqual({ valid: true });
     });
 
-    it('should propagate validation errors', async () => {
+    it('should propagate validation errors', () => {
       const cardData = {
         numero: '1234567890123456',
         nomeTitular: 'Test User',
@@ -206,19 +206,19 @@ describe('CardController', () => {
         cvv: '123',
       };
 
-      mockPaymentService.validateCreditCard.mockRejectedValue(
-        new BadRequestException('Invalid card number'),
-      );
+      mockPaymentService.validateCreditCard.mockImplementation(() => {
+        throw new BadRequestException('Invalid card number');
+      });
 
-      await expect(controller.validateCard(cardData)).rejects.toThrow(
+      expect(() => controller.validateCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(controller.validateCard(cardData)).rejects.toThrow(
+      expect(() => controller.validateCard(cardData)).toThrow(
         'Invalid card number',
       );
     });
 
-    it('should handle expired card error', async () => {
+    it('should handle expired card error', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
@@ -226,16 +226,16 @@ describe('CardController', () => {
         cvv: '123',
       };
 
-      mockPaymentService.validateCreditCard.mockRejectedValue(
-        new BadRequestException('Card has expired'),
-      );
+      mockPaymentService.validateCreditCard.mockImplementation(() => {
+        throw new BadRequestException('Card has expired');
+      });
 
-      await expect(controller.validateCard(cardData)).rejects.toThrow(
+      expect(() => controller.validateCard(cardData)).toThrow(
         'Card has expired',
       );
     });
 
-    it('should handle invalid CVV error', async () => {
+    it('should handle invalid CVV error', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
@@ -243,13 +243,11 @@ describe('CardController', () => {
         cvv: '12',
       };
 
-      mockPaymentService.validateCreditCard.mockRejectedValue(
-        new BadRequestException('Invalid CVV'),
-      );
+      mockPaymentService.validateCreditCard.mockImplementation(() => {
+        throw new BadRequestException('Invalid CVV');
+      });
 
-      await expect(controller.validateCard(cardData)).rejects.toThrow(
-        'Invalid CVV',
-      );
+      expect(() => controller.validateCard(cardData)).toThrow('Invalid CVV');
     });
   });
 

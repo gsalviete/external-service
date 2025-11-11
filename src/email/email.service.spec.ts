@@ -1,9 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EmailService } from './email.service';
 import { Email } from './email.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+
+// Mock MailerSend module
+jest.mock('mailersend', () => {
+  return {
+    MailerSend: jest.fn().mockImplementation(() => ({
+      email: {
+        send: jest.fn().mockResolvedValue({ success: true }),
+      },
+    })),
+    EmailParams: jest.fn().mockImplementation(() => ({
+      setFrom: jest.fn().mockReturnThis(),
+      setTo: jest.fn().mockReturnThis(),
+      setSubject: jest.fn().mockReturnThis(),
+      setText: jest.fn().mockReturnThis(),
+    })),
+    Sender: jest.fn().mockImplementation((email, name) => ({ email, name })),
+    Recipient: jest.fn().mockImplementation((email, name) => ({ email, name })),
+  };
+});
 
 describe('EmailService', () => {
   let service: EmailService;
@@ -16,6 +36,17 @@ describe('EmailService', () => {
     findOneBy: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      const config: Record<string, string> = {
+        MAILERSEND_API_KEY: 'test-api-key',
+        MAILERSEND_FROM_EMAIL: 'noreply@test.com',
+        MAILERSEND_FROM_NAME: 'Test Service',
+      };
+      return config[key];
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -23,6 +54,10 @@ describe('EmailService', () => {
         {
           provide: getRepositoryToken(Email),
           useValue: mockRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();

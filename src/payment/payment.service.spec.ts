@@ -158,7 +158,7 @@ describe('PaymentService', () => {
         cvv: '123',
       };
 
-      const result = await service.validateCreditCard(cardData);
+      const result = service.validateCreditCard(cardData);
 
       expect(result).toEqual({ valid: true });
     });
@@ -171,10 +171,10 @@ describe('PaymentService', () => {
         cvv: '123',
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         'Invalid card number',
       );
     });
@@ -187,10 +187,10 @@ describe('PaymentService', () => {
         cvv: '123',
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         'Card number is required',
       );
     });
@@ -203,10 +203,10 @@ describe('PaymentService', () => {
         cvv: '123',
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         'Card has expired',
       );
     });
@@ -219,12 +219,10 @@ describe('PaymentService', () => {
         cvv: '12', // Too short
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
-        'Invalid CVV',
-      );
+      expect(() => service.validateCreditCard(cardData)).toThrow('Invalid CVV');
     });
 
     it('should throw BadRequestException for invalid CVV (too long)', async () => {
@@ -235,12 +233,10 @@ describe('PaymentService', () => {
         cvv: '12345', // Too long
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
-        'Invalid CVV',
-      );
+      expect(() => service.validateCreditCard(cardData)).toThrow('Invalid CVV');
     });
 
     it('should throw BadRequestException for non-numeric CVV', async () => {
@@ -251,12 +247,10 @@ describe('PaymentService', () => {
         cvv: 'abc',
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
-        'Invalid CVV',
-      );
+      expect(() => service.validateCreditCard(cardData)).toThrow('Invalid CVV');
     });
 
     it('should throw BadRequestException for invalid date format', async () => {
@@ -267,10 +261,10 @@ describe('PaymentService', () => {
         cvv: '123',
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         'Invalid expiration date',
       );
     });
@@ -283,10 +277,10 @@ describe('PaymentService', () => {
         cvv: '123',
       };
 
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         BadRequestException,
       );
-      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+      expect(() => service.validateCreditCard(cardData)).toThrow(
         'Cardholder name is required',
       );
     });

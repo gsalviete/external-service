@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, PaymentStatus } from './payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CardDataDto } from './dto/card-data.dto';
+import { ChargeDto } from './dto/charge.dto';
 
 @Injectable()
 export class PaymentService {
@@ -106,7 +108,7 @@ export class PaymentService {
     return payment;
   }
 
-  async validateCreditCard(cardData: any): Promise<{ valid: boolean }> {
+  validateCreditCard(cardData: CardDataDto): { valid: boolean } {
     // Validate cardholder name
     if (!cardData.nomeTitular || cardData.nomeTitular.trim() === '') {
       throw new BadRequestException('Cardholder name is required');
@@ -151,14 +153,14 @@ export class PaymentService {
     return { valid: true };
   }
 
-  async processCharge(chargeData: any): Promise<Payment> {
+  async processCharge(chargeData: ChargeDto): Promise<Payment> {
     // Validate amount
     if (!chargeData.valor || chargeData.valor <= 0) {
       throw new BadRequestException('Amount must be positive');
     }
 
     // Validate card first
-    await this.validateCreditCard(chargeData.cardData);
+    this.validateCreditCard(chargeData.cardData);
 
     // Simulate 90% success rate, 10% failure rate
     const shouldSucceed = Math.random() >= 0.1;
