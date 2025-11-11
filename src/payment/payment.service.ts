@@ -2,9 +2,12 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import Stripe from 'stripe';
 import { Payment, PaymentStatus } from './payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CardDataDto } from './dto/card-data.dto';
@@ -12,10 +15,18 @@ import { ChargeDto } from './dto/charge.dto';
 
 @Injectable()
 export class PaymentService {
+  private stripe: Stripe | null = null;
+
   constructor(
     @InjectRepository(Payment)
     private readonly repo: Repository<Payment>,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+    if (stripeSecretKey) {
+      this.stripe = new Stripe(stripeSecretKey);
+    }
+  }
 
   /**
    * Luhn algorithm to validate credit card numbers
@@ -162,13 +173,61 @@ export class PaymentService {
     // Validate card first
     this.validateCreditCard(chargeData.cardData);
 
-    // Simulate 90% success rate, 10% failure rate
-    const shouldSucceed = Math.random() >= 0.1;
+    let status = PaymentStatus.PENDING;
+
+    // Process payment through Stripe if configured
+    if (this.stripe) {
+      try {
+        // Parse expiration date (MM/YYYY format)
+        const [expMonth, expYear] = chargeData.cardData.validade.split('/');
+
+        // Create a Payment Method
+        const paymentMethod = await this.stripe.paymentMethods.create({
+          type: 'card',
+          card: {
+            number: chargeData.cardData.numero,
+            exp_month: parseInt(expMonth, 10),
+            exp_year: parseInt(expYear, 10),
+            cvc: chargeData.cardData.cvv,
+          },
+        });
+
+        // Create a Payment Intent (amount in cents)
+        const paymentIntent = await this.stripe.paymentIntents.create({
+          amount: Math.round(chargeData.valor * 100), // Convert to cents
+          currency: 'brl',
+          payment_method: paymentMethod.id,
+          confirm: true,
+          automatic_payment_methods: {
+            enabled: true,
+            allow_redirects: 'never',
+          },
+        });
+
+        // Check payment status
+        if (paymentIntent.status === 'succeeded') {
+          status = PaymentStatus.PAID;
+        } else {
+          status = PaymentStatus.FAILED;
+        }
+      } catch (error) {
+        // Stripe error - mark payment as failed
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new InternalServerErrorException(
+          `Payment processing failed: ${errorMessage}`,
+        );
+      }
+    } else {
+      // Fallback: Simulate 90% success rate, 10% failure rate (for testing without Stripe)
+      const shouldSucceed = Math.random() >= 0.1;
+      status = shouldSucceed ? PaymentStatus.PAID : PaymentStatus.FAILED;
+    }
 
     const payment = this.repo.create({
       valor: chargeData.valor,
       ciclista: chargeData.ciclista,
-      status: shouldSucceed ? PaymentStatus.PAID : PaymentStatus.FAILED,
+      status,
     });
 
     return this.repo.save(payment);

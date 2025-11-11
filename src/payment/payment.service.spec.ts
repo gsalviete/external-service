@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaymentService } from './payment.service';
@@ -16,6 +17,13 @@ describe('PaymentService', () => {
     findOneBy: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn((_key: string) => {
+      // Return undefined for STRIPE_SECRET_KEY to use fallback mock logic in tests
+      return undefined;
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -23,6 +31,10 @@ describe('PaymentService', () => {
         {
           provide: getRepositoryToken(Payment),
           useValue: mockRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -442,6 +454,124 @@ describe('PaymentService', () => {
       );
       await expect(service.processCharge(chargeData)).rejects.toThrow(
         'Amount must be positive',
+      );
+    });
+  });
+
+  describe('Stripe Integration', () => {
+    let stripeService: PaymentService;
+    let _stripeRepo: Repository<Payment>;
+
+    const mockStripeConfigService = {
+      get: jest.fn((_key: string) => {
+        return 'sk_test_mock_stripe_key';
+      }),
+    };
+
+    const mockStripe = {
+      paymentMethods: {
+        create: jest.fn(),
+      },
+      paymentIntents: {
+        create: jest.fn(),
+      },
+    };
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentService,
+          {
+            provide: getRepositoryToken(Payment),
+            useValue: mockRepository,
+          },
+          {
+            provide: ConfigService,
+            useValue: mockStripeConfigService,
+          },
+        ],
+      }).compile();
+
+      stripeService = module.get<PaymentService>(PaymentService);
+      _stripeRepo = module.get<Repository<Payment>>(
+        getRepositoryToken(Payment),
+      );
+
+      // Manually set stripe instance for testing
+      (stripeService as any).stripe = mockStripe;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should process charge through Stripe successfully', async () => {
+      const chargeData = {
+        valor: 100.0,
+        ciclista: 1,
+        cardData: {
+          numero: '4532015112830366',
+          nomeTitular: 'Test User',
+          validade: '12/2025',
+          cvv: '123',
+        },
+      };
+
+      mockStripe.paymentMethods.create.mockResolvedValue({
+        id: 'pm_test_123',
+      });
+
+      mockStripe.paymentIntents.create.mockResolvedValue({
+        id: 'pi_test_123',
+        status: 'succeeded',
+      });
+
+      const savedPayment = {
+        id: 1,
+        valor: 100.0,
+        ciclista: 1,
+        status: PaymentStatus.PAID,
+        horaSolicitacao: new Date(),
+        horaFinalizacao: new Date(),
+      };
+
+      mockRepository.create.mockReturnValue(savedPayment);
+      mockRepository.save.mockResolvedValue(savedPayment);
+
+      const result = await stripeService.processCharge(chargeData);
+
+      expect(mockStripe.paymentMethods.create).toHaveBeenCalledWith({
+        type: 'card',
+        card: {
+          number: '4532015112830366',
+          exp_month: 12,
+          exp_year: 2025,
+          cvc: '123',
+        },
+      });
+
+      expect(mockStripe.paymentIntents.create).toHaveBeenCalled();
+      expect(result.status).toBe(PaymentStatus.PAID);
+    });
+
+    it('should handle Stripe payment failure', async () => {
+      const chargeData = {
+        valor: 100.0,
+        ciclista: 1,
+        cardData: {
+          numero: '4532015112830366',
+          nomeTitular: 'Test User',
+          validade: '12/2025',
+          cvv: '123',
+        },
+      };
+
+      mockStripe.paymentMethods.create.mockRejectedValue(
+        new Error('Card declined'),
+      );
+
+      await expect(stripeService.processCharge(chargeData)).rejects.toThrow(
+        'Payment processing failed',
       );
     });
   });
