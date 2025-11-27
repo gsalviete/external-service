@@ -81,10 +81,12 @@ export class PaymentService {
   }
 
   async createPayment(dto: CreatePaymentDto): Promise<Payment> {
-    // Mock implementation - In production, integrate with payment gateway
+    const shouldSucceed = Math.random() >= 0.1; // 90% chance of success
+    const status = shouldSucceed ? PaymentStatus.PAID : PaymentStatus.FAILED;
+
     const payment = this.repo.create({
       ...dto,
-      status: PaymentStatus.PAID,
+      status,
     });
     return this.repo.save(payment);
   }
@@ -102,9 +104,9 @@ export class PaymentService {
       where: { status: PaymentStatus.PENDING },
     });
 
-    // Mock implementation - In production, process each payment through payment gateway
     const processedPayments = pendingPayments.map((payment) => {
-      payment.status = PaymentStatus.PAID;
+      const shouldSucceed = Math.random() >= 0.1; // 90% chance of success
+      payment.status = shouldSucceed ? PaymentStatus.PAID : PaymentStatus.FAILED;
       return payment;
     });
 
@@ -119,44 +121,80 @@ export class PaymentService {
     return payment;
   }
 
-  validateCreditCard(cardData: CardDataDto): { valid: boolean } {
-    // Validate cardholder name
+  async validateCreditCard(
+    cardData: CardDataDto,
+  ): Promise<{ valid: boolean }> {
+    // Validate basic required fields first
     if (!cardData.nomeTitular || cardData.nomeTitular.trim() === '') {
       throw new BadRequestException('Cardholder name is required');
     }
 
-    // Validate card number
     if (!cardData.numero || cardData.numero.trim() === '') {
       throw new BadRequestException('Card number is required');
     }
 
-    // Validate card number using Luhn algorithm
-    if (!this.validateLuhn(cardData.numero)) {
-      throw new BadRequestException('Invalid card number');
-    }
-
-    // Validate CVV
     if (!cardData.cvv) {
       throw new BadRequestException('Invalid CVV');
     }
 
-    const cvvStr = String(cardData.cvv);
-    if (!/^\d{3,4}$/.test(cvvStr)) {
-      throw new BadRequestException('Invalid CVV');
-    }
-
-    // Validate expiration date format first
+    // Validate expiration date format
     const dateMatch = cardData.validade.match(/^(\d{1,2})\/(\d{4})$/);
     if (!dateMatch) {
       throw new BadRequestException('Invalid expiration date');
     }
 
     const month = parseInt(dateMatch[1], 10);
+    const year = parseInt(dateMatch[2], 10);
+
     if (month < 1 || month > 12) {
       throw new BadRequestException('Invalid expiration date');
     }
 
-    // Then validate expiry
+    // If Stripe is configured, use real Stripe validation
+    if (this.stripe) {
+      try {
+        // Create a PaymentMethod with Stripe to validate the card
+        // This validates the card without charging it
+        await this.stripe.paymentMethods.create({
+          type: 'card',
+          card: {
+            number: cardData.numero,
+            exp_month: month,
+            exp_year: year,
+            cvc: cardData.cvv,
+          },
+          billing_details: {
+            name: cardData.nomeTitular,
+          },
+        });
+
+        // If PaymentMethod creation succeeds, card is valid
+        return { valid: true };
+      } catch (error: any) {
+        // Stripe will throw specific errors for invalid cards
+        if (error.type === 'StripeCardError' || error.code) {
+          throw new BadRequestException(
+            `Invalid card: ${error.message || 'Card validation failed'}`,
+          );
+        }
+        // Re-throw other errors
+        throw new BadRequestException('Card validation failed');
+      }
+    }
+
+    // Fallback: Local validation if Stripe not configured
+    // Validate card number using Luhn algorithm
+    if (!this.validateLuhn(cardData.numero)) {
+      throw new BadRequestException('Invalid card number');
+    }
+
+    // Validate CVV format
+    const cvvStr = String(cardData.cvv);
+    if (!/^\d{3,4}$/.test(cvvStr)) {
+      throw new BadRequestException('Invalid CVV');
+    }
+
+    // Validate card not expired
     if (!this.validateExpirationDate(cardData.validade)) {
       throw new BadRequestException('Card has expired');
     }
@@ -171,7 +209,7 @@ export class PaymentService {
     }
 
     // Validate card first
-    this.validateCreditCard(chargeData.cardData);
+    await this.validateCreditCard(chargeData.cardData);
 
     let status = PaymentStatus.PENDING;
 

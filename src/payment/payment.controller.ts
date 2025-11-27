@@ -33,7 +33,7 @@ export class PaymentController {
 
   @Post('validaCartaoDeCredito')
   @HttpCode(200)
-  validateCreditCard(@Body() cardData: CardDataDto) {
+  async validateCreditCard(@Body() cardData: CardDataDto) {
     return this.service.validateCreditCard(cardData);
   }
 }
@@ -44,7 +44,7 @@ export class CardController {
 
   @Post('validarCartaoDeCredito')
   @HttpCode(200)
-  validateCard(@Body() cardData: CardDataDto) {
+  async validateCard(@Body() cardData: CardDataDto) {
     return this.service.validateCreditCard(cardData);
   }
 
