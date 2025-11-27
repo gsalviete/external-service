@@ -81,6 +81,8 @@ export class PaymentService {
   }
 
   async createPayment(dto: CreatePaymentDto): Promise<Payment> {
+    // NOSONAR: Math.random() is safe here - used only for simulating payment gateway
+    // failure rate (10%) in development/test environment, not for security purposes
     const shouldSucceed = Math.random() >= 0.1; // 90% chance of success
     const status = shouldSucceed ? PaymentStatus.PAID : PaymentStatus.FAILED;
 
@@ -105,6 +107,8 @@ export class PaymentService {
     });
 
     const processedPayments = pendingPayments.map((payment) => {
+      // NOSONAR: Math.random() is safe here - used only for simulating payment gateway
+      // failure rate (10%) in development/test environment, not for security purposes
       const shouldSucceed = Math.random() >= 0.1; // 90% chance of success
       payment.status = shouldSucceed ? PaymentStatus.PAID : PaymentStatus.FAILED;
       return payment;
