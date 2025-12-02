@@ -15,7 +15,7 @@ import { PaymentModule } from './payment/payment.module';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: true, // Temporarily true to create tables in production
       ssl:
         process.env.NODE_ENV === 'production'
           ? { rejectUnauthorized: false }
