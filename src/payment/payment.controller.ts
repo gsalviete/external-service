@@ -4,7 +4,7 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CardDataDto } from './dto/card-data.dto';
 import { ChargeDto } from './dto/charge.dto';
 
-@Controller()
+@Controller('pagamento')
 export class PaymentController {
   constructor(private readonly service: PaymentService) {}
 
