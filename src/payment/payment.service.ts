@@ -283,7 +283,7 @@ export class PaymentService {
 
       try {
         // Parse expiration date (MM/YYYY format)
-        const [expMonth, expYear] = chargeData.cardData.validade.split('/');
+        const [expYear, expMonth] = chargeData.cardData.validade.split('-');
 
         // Create a Payment Method
         const paymentMethod = await this.stripe.paymentMethods.create({
