@@ -18,17 +18,24 @@ export class AppService {
   }
 
   async restaurarDados(): Promise<{ message: string }> {
-    // Clear all tables
-    await this.paymentRepo.delete({});
-    await this.emailRepo.delete({});
+    // 1. CORREÇÃO DO DELETE:
+    // Trocamos .delete({}) por .createQueryBuilder().delete().execute()
+    // Isso evita o erro "Empty criteria" e limpa a tabela.
+    await this.emailRepo.createQueryBuilder().delete().execute();
+    await this.paymentRepo.createQueryBuilder().delete().execute();
 
-    // Reset sequences to start from 1
-    await this.paymentRepo.query(
-      `ALTER SEQUENCE payments_id_seq RESTART WITH 1`,
-    );
-    await this.emailRepo.query(`ALTER SEQUENCE emails_id_seq RESTART WITH 1`);
+    // 2. RESETAR SEQUÊNCIAS (IDs voltarem para 1)
+    // Usamos um try/catch caso a sequence tenha nome diferente no banco
+    try {
+      await this.paymentRepo.query(
+        `ALTER SEQUENCE payments_id_seq RESTART WITH 1`,
+      );
+      await this.emailRepo.query(`ALTER SEQUENCE emails_id_seq RESTART WITH 1`);
+    } catch (e) {
+      console.log('Aviso: Não foi possível resetar sequencias (pode ser normal em alguns bancos):', e.message);
+    }
 
-    // Insert initial payment data for testing
+    // 3. INSERIR DADOS INICIAIS
     const now = new Date();
 
     await this.paymentRepo.save({
