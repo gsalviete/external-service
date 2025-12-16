@@ -55,7 +55,7 @@ export class EmailService {
       throw new BadRequestException('Message is required');
     }
 
-    // Send email via MailerSend
+    // Send email via MailerSend (optional - will only send if configured)
     if (this.mailerSend && this.fromEmail) {
       try {
         const sentFrom = new Sender(this.fromEmail, this.fromName ?? undefined);
@@ -68,16 +68,22 @@ export class EmailService {
           .setText(dto.mensagem);
 
         await this.mailerSend.email.send(emailParams);
+        console.log(`[EmailService] Email sent successfully to ${dto.email}`);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
-        throw new InternalServerErrorException(
-          `Failed to send email: ${errorMessage}`,
+        // Log the error but don't fail the request - just save the email record
+        console.warn(
+          `[EmailService] Failed to send email via MailerSend: ${errorMessage}. Email record will still be saved.`,
         );
       }
+    } else {
+      console.log(
+        `[EmailService] MailerSend not configured. Email record will be saved without sending.`,
+      );
     }
 
-    // Save email record to database
+    // Save email record to database (always succeeds even if email sending fails)
     const email = this.repo.create(dto);
     return this.repo.save(email);
   }

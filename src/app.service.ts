@@ -19,30 +19,33 @@ export class AppService {
 
   async restaurarDados(): Promise<{ message: string }> {
     // Clear all tables
-    await this.paymentRepo.clear();
-    await this.emailRepo.clear();
+    await this.paymentRepo.delete({});
+    await this.emailRepo.delete({});
+
+    // Reset sequences to start from 1
+    await this.paymentRepo.query(
+      `ALTER SEQUENCE payments_id_seq RESTART WITH 1`,
+    );
+    await this.emailRepo.query(`ALTER SEQUENCE emails_id_seq RESTART WITH 1`);
 
     // Insert initial payment data for testing
     const now = new Date();
 
-    await this.paymentRepo.save([
-      {
-        id: 1,
-        status: PaymentStatus.PENDING,
-        horaSolicitacao: now,
-        horaFinalizacao: now,
-        valor: 10,
-        ciclista: 3,
-      },
-      {
-        id: 2,
-        status: PaymentStatus.FAILED,
-        horaSolicitacao: now,
-        horaFinalizacao: now,
-        valor: 25.5,
-        ciclista: 4,
-      },
-    ]);
+    await this.paymentRepo.save({
+      status: PaymentStatus.PENDING,
+      horaSolicitacao: now,
+      horaFinalizacao: now,
+      valor: 10,
+      ciclista: 3,
+    });
+
+    await this.paymentRepo.save({
+      status: PaymentStatus.FAILED,
+      horaSolicitacao: now,
+      horaFinalizacao: now,
+      valor: 25.5,
+      ciclista: 4,
+    });
 
     return { message: 'Database restored successfully' };
   }
