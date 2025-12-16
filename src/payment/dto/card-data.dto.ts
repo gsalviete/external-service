@@ -17,8 +17,8 @@ export class CardDataDto {
 
   @IsString()
   @IsOptional()
-  @Matches(/^(0[1-9]|1[0-2])\/\d{4}$/, {
-    message: 'Expiration date must be in MM/YYYY format',
+  @Matches(/^\d{4}-(0[1-9]|1[0-2])$/, {
+    message: 'Expiration date must be in YYYY-MM format',
   })
   validade?: string;
 

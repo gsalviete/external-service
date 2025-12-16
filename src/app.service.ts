@@ -17,7 +17,7 @@ export class AppService {
     return 'External Service - SCB';
   }
 
-  async restaurarBanco(): Promise<{ message: string }> {
+  async restaurarDados(): Promise<{ message: string }> {
     // Clear all tables
     await this.paymentRepo.clear();
     await this.emailRepo.clear();

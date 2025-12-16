@@ -10,8 +10,8 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('restaurarBanco')
-  async restaurarBanco(): Promise<{ message: string }> {
-    return this.appService.restaurarBanco();
+  @Get('restaurarDados')
+  async restaurarDados(): Promise<{ message: string }> {
+    return this.appService.restaurarDados();
   }
 }
