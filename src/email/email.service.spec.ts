@@ -173,6 +173,48 @@ describe('EmailService', () => {
         'Message is required',
       );
     });
+
+    it('should handle MailerSend errors with Error instance', async () => {
+      const dto = {
+        email: 'test@example.com',
+        assunto: 'Test Subject',
+        mensagem: 'Test Message',
+      };
+
+      const savedEmail = { id: 1, ...dto, createdAt: new Date() };
+      mockRepository.create.mockReturnValue(savedEmail);
+      mockRepository.save.mockResolvedValue(savedEmail);
+
+      // Mock MailerSend to throw an error
+      const mailerSend = (service as any).mailerSend;
+      mailerSend.email.send.mockRejectedValueOnce(
+        new Error('MailerSend API error'),
+      );
+
+      await expect(service.sendEmail(dto)).rejects.toThrow(
+        'Failed to send email: MailerSend API error',
+      );
+    });
+
+    it('should handle MailerSend errors with non-Error instance', async () => {
+      const dto = {
+        email: 'test@example.com',
+        assunto: 'Test Subject',
+        mensagem: 'Test Message',
+      };
+
+      const savedEmail = { id: 1, ...dto, createdAt: new Date() };
+      mockRepository.create.mockReturnValue(savedEmail);
+      mockRepository.save.mockResolvedValue(savedEmail);
+
+      // Mock MailerSend to throw a non-Error value
+      const mailerSend = (service as any).mailerSend;
+      mailerSend.email.send.mockRejectedValueOnce('String error');
+
+      await expect(service.sendEmail(dto)).rejects.toThrow(
+        'Failed to send email: Unknown error',
+      );
+    });
   });
 
   describe('findAll', () => {

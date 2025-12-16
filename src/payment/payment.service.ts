@@ -177,19 +177,19 @@ export class PaymentService {
 
       try {
         console.log(
-          '🔵 [STRIPE] Verifying PaymentMethod:',
+          '[STRIPE] Verifying PaymentMethod:',
           cardData.paymentMethodId,
         );
         // Retrieve the PaymentMethod to verify it exists and is valid
         const paymentMethod = await this.stripe.paymentMethods.retrieve(
           cardData.paymentMethodId,
         );
-        console.log('✅ [STRIPE] PaymentMethod valid:', paymentMethod.id);
+        console.log('[STRIPE] PaymentMethod valid:', paymentMethod.id);
         return { valid: true };
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Unknown error';
-        console.error('🔴 [STRIPE ERROR]:', message);
+        console.error('[STRIPE ERROR]:', message);
         throw new BadRequestException(`Invalid payment method: ${message}`);
       }
     }

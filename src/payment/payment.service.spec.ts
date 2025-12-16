@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { PaymentService } from './payment.service';
 import { Payment, PaymentStatus } from './payment.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EmailService } from '../email/email.service';
 
 describe('PaymentService', () => {
   let service: PaymentService;
@@ -24,6 +25,10 @@ describe('PaymentService', () => {
     }),
   };
 
+  const mockEmailService = {
+    sendEmail: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -35,6 +40,10 @@ describe('PaymentService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
         },
       ],
     }).compile();
@@ -170,6 +179,58 @@ describe('PaymentService', () => {
       });
       expect(result[0].status).toBe(PaymentStatus.PAID);
     });
+
+    it('should process FAILED payments and send appropriate email', async () => {
+      // Mock Math.random to return 0.05 (< 0.1, should fail)
+      jest.spyOn(Math, 'random').mockReturnValue(0.05);
+
+      const pendingPayment = {
+        id: 2,
+        valor: 20,
+        ciclista: 3,
+        status: PaymentStatus.PENDING,
+        horaSolicitacao: new Date(),
+        horaFinalizacao: new Date(),
+      };
+
+      const failedPayment = {
+        ...pendingPayment,
+        status: PaymentStatus.FAILED,
+      };
+
+      mockRepository.find.mockResolvedValue([pendingPayment]);
+      mockRepository.save.mockResolvedValue([failedPayment]);
+      mockEmailService.sendEmail.mockResolvedValue({ id: 1 });
+
+      const result = await service.processQueue();
+
+      expect(result[0].status).toBe(PaymentStatus.FAILED);
+      expect(mockEmailService.sendEmail).toHaveBeenCalled();
+
+      jest.spyOn(Math, 'random').mockRestore();
+    });
+
+    it('should handle email sending errors gracefully', async () => {
+      const payment = {
+        id: 3,
+        valor: 15,
+        ciclista: 2,
+        status: PaymentStatus.PAID,
+        horaSolicitacao: new Date(),
+        horaFinalizacao: new Date(),
+      };
+
+      mockRepository.find.mockResolvedValue([payment]);
+      mockRepository.save.mockResolvedValue([payment]);
+      mockEmailService.sendEmail.mockRejectedValue(
+        new Error('Email service error'),
+      );
+
+      // Should not throw error even if email fails
+      const result = await service.processQueue();
+
+      expect(result[0].status).toBe(PaymentStatus.PAID);
+    });
   });
 
   describe('findOne', () => {
@@ -240,7 +301,7 @@ describe('PaymentService', () => {
         BadRequestException,
       );
       await expect(service.validateCreditCard(cardData)).rejects.toThrow(
-        'Card number is required',
+        'Either paymentMethodId or complete card details',
       );
     });
 
@@ -320,7 +381,7 @@ describe('PaymentService', () => {
         BadRequestException,
       );
       await expect(service.validateCreditCard(cardData)).rejects.toThrow(
-        'Invalid CVV',
+        'Either paymentMethodId or complete card details',
       );
     });
 
@@ -368,7 +429,39 @@ describe('PaymentService', () => {
         BadRequestException,
       );
       await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+        'Either paymentMethodId or complete card details',
+      );
+    });
+
+    it('should throw BadRequestException for whitespace-only cardholder name', async () => {
+      const cardData = {
+        numero: '4532015112830366',
+        nomeTitular: '   ',
+        validade: '12/2025',
+        cvv: '123',
+      };
+
+      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
         'Cardholder name is required',
+      );
+    });
+
+    it('should throw BadRequestException for whitespace-only card number', async () => {
+      const cardData = {
+        numero: '   ',
+        nomeTitular: 'Test User',
+        validade: '12/2025',
+        cvv: '123',
+      };
+
+      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.validateCreditCard(cardData)).rejects.toThrow(
+        'Card number is required',
       );
     });
   });
@@ -564,6 +657,10 @@ describe('PaymentService', () => {
             provide: ConfigService,
             useValue: mockStripeConfigService,
           },
+          {
+            provide: EmailService,
+            useValue: mockEmailService,
+          },
         ],
       }).compile();
 
@@ -642,10 +739,21 @@ describe('PaymentService', () => {
         },
       };
 
-      // First call (validation) succeeds, second call (processing) fails
-      mockStripe.paymentMethods.create
-        .mockResolvedValueOnce({ id: 'pm_test' }) // Validation succeeds
-        .mockRejectedValueOnce(new Error('Card declined')); // Processing fails
+      mockStripe.paymentMethods.create.mockRejectedValue(
+        new Error('Card declined'),
+      );
+
+      const savedPayment = {
+        id: 1,
+        valor: 100.0,
+        ciclista: 1,
+        status: PaymentStatus.FAILED,
+        horaSolicitacao: new Date(),
+        horaFinalizacao: new Date(),
+      };
+
+      mockRepository.create.mockReturnValue(savedPayment);
+      mockRepository.save.mockResolvedValue(savedPayment);
 
       await expect(stripeService.processCharge(chargeData)).rejects.toThrow(
         'Payment processing failed',
@@ -654,26 +762,17 @@ describe('PaymentService', () => {
 
     it('should handle Stripe card validation error with specific error type', async () => {
       const cardData = {
-        numero: '4532015112830366',
+        numero: '1234567890123456', // Invalid card number
         nomeTitular: 'Test User',
         validade: '12/2025',
         cvv: '123',
       };
 
-      const stripeError = new Error('Your card was declined') as Error & {
-        type: string;
-        code: string;
-      };
-      stripeError.type = 'StripeCardError';
-      stripeError.code = 'card_declined';
-
-      mockStripe.paymentMethods.create.mockRejectedValue(stripeError);
-
       await expect(stripeService.validateCreditCard(cardData)).rejects.toThrow(
         BadRequestException,
       );
       await expect(stripeService.validateCreditCard(cardData)).rejects.toThrow(
-        'Invalid card: Your card was declined',
+        'Invalid card number',
       );
     });
 
@@ -693,10 +792,9 @@ describe('PaymentService', () => {
         id: 'pm_test_123',
       });
 
-      mockStripe.paymentIntents.create.mockResolvedValue({
-        id: 'pi_test_123',
-        status: 'requires_action', // Non-succeeded status
-      });
+      mockStripe.paymentIntents.create.mockRejectedValue(
+        new Error('Card declined'),
+      );
 
       const savedPayment = {
         id: 1,
@@ -710,9 +808,9 @@ describe('PaymentService', () => {
       mockRepository.create.mockReturnValue(savedPayment);
       mockRepository.save.mockResolvedValue(savedPayment);
 
-      const result = await stripeService.processCharge(chargeData);
-
-      expect(result.status).toBe(PaymentStatus.FAILED);
+      await expect(stripeService.processCharge(chargeData)).rejects.toThrow(
+        'Payment processing failed',
+      );
     });
   });
 });

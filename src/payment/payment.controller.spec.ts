@@ -146,6 +146,41 @@ describe('PaymentController', () => {
       );
       expect(result).toEqual({ valid: true });
     });
+
+    it('should handle validation errors with Error instance', async () => {
+      const cardData = {
+        numero: '1234567890123456',
+        nomeTitular: 'Test User',
+        validade: '12/25',
+        cvv: '123',
+      };
+
+      mockPaymentService.validateCreditCard.mockRejectedValue(
+        new BadRequestException('Invalid card number'),
+      );
+
+      await expect(controller.validateCreditCard(cardData)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.validateCreditCard(cardData)).rejects.toThrow(
+        'Invalid card number',
+      );
+    });
+
+    it('should handle validation errors with non-Error instance', async () => {
+      const cardData = {
+        numero: '1234567890123456',
+        nomeTitular: 'Test User',
+        validade: '12/25',
+        cvv: '123',
+      };
+
+      mockPaymentService.validateCreditCard.mockRejectedValue('String error');
+
+      await expect(controller.validateCreditCard(cardData)).rejects.toBe(
+        'String error',
+      );
+    });
   });
 });
 
