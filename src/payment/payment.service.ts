@@ -59,13 +59,13 @@ export class PaymentService {
    * Validate expiration date
    */
   private validateExpirationDate(validade: string): boolean {
-    const match = validade.match(/^(\d{1,2})\/(\d{4})$/);
+    const match = validade.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
     if (!match) {
       return false;
     }
 
-    const month = parseInt(match[1], 10);
-    const year = parseInt(match[2], 10);
+    const year = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
 
     if (month < 1 || month > 12) {
       return false;
@@ -216,13 +216,13 @@ export class PaymentService {
     }
 
     // Validate expiration date format
-    const dateMatch = cardData.validade.match(/^(\d{1,2})\/(\d{4})$/);
+    const dateMatch = cardData.validade.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
     if (!dateMatch) {
       throw new BadRequestException('Invalid expiration date');
     }
 
-    const month = parseInt(dateMatch[1], 10);
-    const year = parseInt(dateMatch[2], 10);
+    const year = parseInt(dateMatch[1], 10);
+    const month = parseInt(dateMatch[2], 10);
 
     if (month < 1 || month > 12) {
       throw new BadRequestException('Invalid expiration date');

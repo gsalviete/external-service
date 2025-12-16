@@ -274,7 +274,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366', // Valid Visa test card
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -287,7 +287,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '1234567890123456', // Invalid - fails Luhn algorithm
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -303,7 +303,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -319,7 +319,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2020', // Expired
+        validade: '2020-12', // Expired
         cvv: '123',
       };
 
@@ -335,7 +335,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '12', // Too short
       };
 
@@ -351,7 +351,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '12345', // Too long
       };
 
@@ -367,7 +367,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: 'abc',
       };
 
@@ -383,7 +383,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '',
       };
 
@@ -395,11 +395,11 @@ describe('PaymentService', () => {
       );
     });
 
-    it('should throw BadRequestException for wrong date pattern (not MM/YYYY)', async () => {
+    it('should throw BadRequestException for wrong date pattern (not YYYY-MM)', async () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/25', // Should be 12/2025
+        validade: '25-12', // Should be 2025-12
         cvv: '123',
       };
 
@@ -415,7 +415,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '13/2025', // Invalid month
+        validade: '2025-13', // Invalid month
         cvv: '123',
       };
 
@@ -431,7 +431,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: '',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -447,7 +447,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: '   ',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -463,7 +463,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '   ',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -484,7 +484,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -514,7 +514,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '1234567890123456', // Invalid
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -534,7 +534,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -568,7 +568,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -602,7 +602,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -622,7 +622,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -695,7 +695,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -744,7 +744,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -774,7 +774,7 @@ describe('PaymentService', () => {
       const cardData = {
         numero: '1234567890123456', // Invalid card number
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -793,7 +793,7 @@ describe('PaymentService', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };

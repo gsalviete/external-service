@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Payment } from './payment/payment.entity';
+import { Payment, PaymentStatus } from './payment/payment.entity';
 import { Email } from './email/email.entity';
 
 @Injectable()
@@ -22,8 +22,27 @@ export class AppService {
     await this.paymentRepo.clear();
     await this.emailRepo.clear();
 
-    // No initial data needed for external service according to documentation
-    // Payment and email records will be created as needed by other services
+    // Insert initial payment data for testing
+    const now = new Date();
+
+    await this.paymentRepo.save([
+      {
+        id: 1,
+        status: PaymentStatus.PENDING,
+        horaSolicitacao: now,
+        horaFinalizacao: now,
+        valor: 10,
+        ciclista: 3,
+      },
+      {
+        id: 2,
+        status: PaymentStatus.FAILED,
+        horaSolicitacao: now,
+        horaFinalizacao: now,
+        valor: 25.5,
+        ciclista: 4,
+      },
+    ]);
 
     return { message: 'Database restored successfully' };
   }

@@ -190,7 +190,7 @@ Valida um cartão de crédito (algoritmo de Luhn, data de validade, CVV).
 {
   "numero": "4532015112830366",
   "nomeTitular": "João Silva",
-  "validade": "12/2025",
+  "validade": "2025-12",
   "cvv": "123"
 }
 ```
@@ -213,7 +213,7 @@ Processa uma cobrança no cartão de crédito via Stripe.
   "cardData": {
     "numero": "4532015112830366",
     "nomeTitular": "Pedro Oliveira",
-    "validade": "03/2027",
+    "validade": "2027-03",
     "cvv": "789"
   }
 }
@@ -228,7 +228,7 @@ Processa uma cobrança no cartão de crédito via Stripe.
 | 374245455400126 | Amex | ✅ Válido |
 | 1234567890123456 | Inválido | ❌ Falha Luhn |
 
-**Formato da Validade:** `MM/YYYY` (ex: `12/2025`)
+**Formato da Validade:** `YYYY-MM` (ex: `2025-12`)
 **CVV:** Qualquer número de 3-4 dígitos
 
 ## 📁 Estrutura do Projeto

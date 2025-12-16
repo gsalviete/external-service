@@ -133,7 +133,7 @@ describe('PaymentController', () => {
       const cardData = {
         numero: '1234567890123456',
         nomeTitular: 'Test User',
-        validade: '12/25',
+        validade: '25-12',
         cvv: '123',
       };
 
@@ -151,7 +151,7 @@ describe('PaymentController', () => {
       const cardData = {
         numero: '1234567890123456',
         nomeTitular: 'Test User',
-        validade: '12/25',
+        validade: '25-12',
         cvv: '123',
       };
 
@@ -171,7 +171,7 @@ describe('PaymentController', () => {
       const cardData = {
         numero: '1234567890123456',
         nomeTitular: 'Test User',
-        validade: '12/25',
+        validade: '25-12',
         cvv: '123',
       };
 
@@ -219,7 +219,7 @@ describe('CardController', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -237,7 +237,7 @@ describe('CardController', () => {
       const cardData = {
         numero: '1234567890123456',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '123',
       };
 
@@ -257,7 +257,7 @@ describe('CardController', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2020',
+        validade: '2020-12',
         cvv: '123',
       };
 
@@ -274,7 +274,7 @@ describe('CardController', () => {
       const cardData = {
         numero: '4532015112830366',
         nomeTitular: 'Test User',
-        validade: '12/2025',
+        validade: '2025-12',
         cvv: '12',
       };
 
@@ -296,7 +296,7 @@ describe('CardController', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -326,7 +326,7 @@ describe('CardController', () => {
         cardData: {
           numero: '1234567890123456',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -350,7 +350,7 @@ describe('CardController', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -371,7 +371,7 @@ describe('CardController', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
@@ -399,7 +399,7 @@ describe('CardController', () => {
         cardData: {
           numero: '4532015112830366',
           nomeTitular: 'Test User',
-          validade: '12/2025',
+          validade: '2025-12',
           cvv: '123',
         },
       };
