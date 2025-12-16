@@ -186,14 +186,17 @@ describe('EmailService', () => {
       mockRepository.save.mockResolvedValue(savedEmail);
 
       // Mock MailerSend to throw an error
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const mailerSend = (service as any).mailerSend;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       mailerSend.email.send.mockRejectedValueOnce(
         new Error('MailerSend API error'),
       );
 
-      await expect(service.sendEmail(dto)).rejects.toThrow(
-        'Failed to send email: MailerSend API error',
-      );
+      // Service should still save the email record even when MailerSend fails
+      const result = await service.sendEmail(dto);
+      expect(result).toEqual(savedEmail);
+      expect(mockRepository.save).toHaveBeenCalled();
     });
 
     it('should handle MailerSend errors with non-Error instance', async () => {
@@ -208,12 +211,15 @@ describe('EmailService', () => {
       mockRepository.save.mockResolvedValue(savedEmail);
 
       // Mock MailerSend to throw a non-Error value
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const mailerSend = (service as any).mailerSend;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       mailerSend.email.send.mockRejectedValueOnce('String error');
 
-      await expect(service.sendEmail(dto)).rejects.toThrow(
-        'Failed to send email: Unknown error',
-      );
+      // Service should still save the email record even when MailerSend fails
+      const result = await service.sendEmail(dto);
+      expect(result).toEqual(savedEmail);
+      expect(mockRepository.save).toHaveBeenCalled();
     });
   });
 
