@@ -5,7 +5,6 @@ import { EmailService } from './email.service';
 
 describe('EmailController', () => {
   let controller: EmailController;
-  let service: EmailService;
 
   const mockEmailService = {
     sendEmail: jest.fn(),
@@ -23,7 +22,6 @@ describe('EmailController', () => {
     }).compile();
 
     controller = module.get<EmailController>(EmailController);
-    service = module.get<EmailService>(EmailService);
   });
 
   afterEach(() => {
@@ -48,7 +46,7 @@ describe('EmailController', () => {
 
       const result = await controller.sendEmail(dto);
 
-      expect(service.sendEmail).toHaveBeenCalledWith(dto);
+      expect(mockEmailService.sendEmail).toHaveBeenCalledWith(dto);
       expect(result).toEqual(savedEmail);
     });
 

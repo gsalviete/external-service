@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Matches, IsOptional } from 'class-validator';
+import { IsString, Matches, IsOptional } from 'class-validator';
 
 export class CardDataDto {
   // Optional: Stripe PaymentMethod ID (starts with pm_)

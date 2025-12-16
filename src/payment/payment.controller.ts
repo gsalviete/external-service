@@ -40,8 +40,10 @@ export class PaymentController {
       console.log('✅ [DEBUG] Success:', result);
       return result;
     } catch (error) {
-      console.error('❌ [DEBUG] Error:', error.message);
-      console.error('❌ [DEBUG] Stack:', error.stack);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const stack = error instanceof Error ? error.stack : undefined;
+      console.error('❌ [DEBUG] Error:', message);
+      console.error('❌ [DEBUG] Stack:', stack);
       throw error;
     }
   }

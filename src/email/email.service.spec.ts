@@ -20,8 +20,12 @@ jest.mock('mailersend', () => {
       setSubject: jest.fn().mockReturnThis(),
       setText: jest.fn().mockReturnThis(),
     })),
-    Sender: jest.fn().mockImplementation((email, name) => ({ email, name })),
-    Recipient: jest.fn().mockImplementation((email, name) => ({ email, name })),
+    Sender: jest
+      .fn()
+      .mockImplementation((email: string, name: string) => ({ email, name })),
+    Recipient: jest
+      .fn()
+      .mockImplementation((email: string, name: string) => ({ email, name })),
   };
 });
 
@@ -37,13 +41,13 @@ describe('EmailService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
-      const config: Record<string, string> = {
+    get: jest.fn((key: string): string => {
+      const config = {
         MAILERSEND_API_KEY: 'test-api-key',
         MAILERSEND_FROM_EMAIL: 'noreply@test.com',
         MAILERSEND_FROM_NAME: 'Test Service',
-      };
-      return config[key];
+      } as const;
+      return (config as Record<string, string>)[key] ?? '';
     }),
   };
 

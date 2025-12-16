@@ -112,7 +112,9 @@ export class PaymentService {
       // NOSONAR: Math.random() is safe here - used only for simulating payment gateway
       // failure rate (10%) in development/test environment, not for security purposes
       const shouldSucceed = Math.random() >= 0.1; // 90% chance of success
-      payment.status = shouldSucceed ? PaymentStatus.PAID : PaymentStatus.FAILED;
+      payment.status = shouldSucceed
+        ? PaymentStatus.PAID
+        : PaymentStatus.FAILED;
       return payment;
     });
 
@@ -164,9 +166,7 @@ export class PaymentService {
     return payment;
   }
 
-  async validateCreditCard(
-    cardData: CardDataDto,
-  ): Promise<{ valid: boolean }> {
+  async validateCreditCard(cardData: CardDataDto): Promise<{ valid: boolean }> {
     // OPTION 1: If Stripe PaymentMethod ID is provided, verify it
     if (cardData.paymentMethodId) {
       if (!this.stripe) {
@@ -176,22 +176,32 @@ export class PaymentService {
       }
 
       try {
-        console.log('🔵 [STRIPE] Verifying PaymentMethod:', cardData.paymentMethodId);
+        console.log(
+          '🔵 [STRIPE] Verifying PaymentMethod:',
+          cardData.paymentMethodId,
+        );
         // Retrieve the PaymentMethod to verify it exists and is valid
         const paymentMethod = await this.stripe.paymentMethods.retrieve(
           cardData.paymentMethodId,
         );
         console.log('✅ [STRIPE] PaymentMethod valid:', paymentMethod.id);
         return { valid: true };
-      } catch (error: any) {
-        console.error('🔴 [STRIPE ERROR]:', error.message);
-        throw new BadRequestException(`Invalid payment method: ${error.message}`);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        console.error('🔴 [STRIPE ERROR]:', message);
+        throw new BadRequestException(`Invalid payment method: ${message}`);
       }
     }
 
     // OPTION 2: Local validation with card details
     // Validate required fields
-    if (!cardData.numero || !cardData.nomeTitular || !cardData.validade || !cardData.cvv) {
+    if (
+      !cardData.numero ||
+      !cardData.nomeTitular ||
+      !cardData.validade ||
+      !cardData.cvv
+    ) {
       throw new BadRequestException(
         'Either paymentMethodId or complete card details (numero, nomeTitular, validade, cvv) are required',
       );
@@ -261,8 +271,14 @@ export class PaymentService {
     // Process payment through Stripe if configured
     if (this.stripe) {
       // Validate required card data fields
-      if (!chargeData.cardData.validade || !chargeData.cardData.numero || !chargeData.cardData.cvv) {
-        throw new BadRequestException('Complete card details are required for Stripe processing');
+      if (
+        !chargeData.cardData.validade ||
+        !chargeData.cardData.numero ||
+        !chargeData.cardData.cvv
+      ) {
+        throw new BadRequestException(
+          'Complete card details are required for Stripe processing',
+        );
       }
 
       try {

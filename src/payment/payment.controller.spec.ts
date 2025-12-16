@@ -6,7 +6,6 @@ import { PaymentStatus } from './payment.entity';
 
 describe('PaymentController', () => {
   let controller: PaymentController;
-  let service: PaymentService;
 
   const mockPaymentService = {
     createPayment: jest.fn(),
@@ -29,7 +28,6 @@ describe('PaymentController', () => {
     }).compile();
 
     controller = module.get<PaymentController>(PaymentController);
-    service = module.get<PaymentService>(PaymentService);
   });
 
   afterEach(() => {
@@ -59,7 +57,7 @@ describe('PaymentController', () => {
 
       const result = await controller.createPayment(dto);
 
-      expect(service.createPayment).toHaveBeenCalledWith(dto);
+      expect(mockPaymentService.createPayment).toHaveBeenCalledWith(dto);
       expect(result).toEqual(payment);
     });
   });
@@ -83,7 +81,7 @@ describe('PaymentController', () => {
 
       const result = await controller.addToQueue(dto);
 
-      expect(service.addToQueue).toHaveBeenCalledWith(dto);
+      expect(mockPaymentService.addToQueue).toHaveBeenCalledWith(dto);
       expect(result).toEqual(payment);
     });
   });
@@ -105,7 +103,7 @@ describe('PaymentController', () => {
 
       const result = await controller.processQueue();
 
-      expect(service.processQueue).toHaveBeenCalled();
+      expect(mockPaymentService.processQueue).toHaveBeenCalled();
       expect(result).toEqual(payments);
     });
   });
@@ -125,7 +123,7 @@ describe('PaymentController', () => {
 
       const result = await controller.findOne('1');
 
-      expect(service.findOne).toHaveBeenCalledWith(1);
+      expect(mockPaymentService.findOne).toHaveBeenCalledWith(1);
       expect(result).toEqual(payment);
     });
   });
@@ -143,7 +141,9 @@ describe('PaymentController', () => {
 
       const result = await controller.validateCreditCard(cardData);
 
-      expect(service.validateCreditCard).toHaveBeenCalledWith(cardData);
+      expect(mockPaymentService.validateCreditCard).toHaveBeenCalledWith(
+        cardData,
+      );
       expect(result).toEqual({ valid: true });
     });
   });
@@ -151,7 +151,6 @@ describe('PaymentController', () => {
 
 describe('CardController', () => {
   let controller: CardController;
-  let service: PaymentService;
 
   const mockPaymentService = {
     validateCreditCard: jest.fn(),
@@ -170,7 +169,6 @@ describe('CardController', () => {
     }).compile();
 
     controller = module.get<CardController>(CardController);
-    service = module.get<PaymentService>(PaymentService);
   });
 
   afterEach(() => {
@@ -194,7 +192,9 @@ describe('CardController', () => {
 
       const result = await controller.validateCard(cardData);
 
-      expect(service.validateCreditCard).toHaveBeenCalledWith(cardData);
+      expect(mockPaymentService.validateCreditCard).toHaveBeenCalledWith(
+        cardData,
+      );
       expect(result).toEqual({ valid: true });
     });
 
@@ -279,7 +279,7 @@ describe('CardController', () => {
 
       const result = await controller.processCharge(chargeData);
 
-      expect(service.processCharge).toHaveBeenCalledWith(chargeData);
+      expect(mockPaymentService.processCharge).toHaveBeenCalledWith(chargeData);
       expect(result.status).toBe(PaymentStatus.PAID);
       expect(result.valor).toBe(50.0);
     });

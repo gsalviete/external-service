@@ -573,6 +573,7 @@ describe('PaymentService', () => {
       );
 
       // Manually set stripe instance for testing
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (stripeService as any).stripe = mockStripe;
     });
 
@@ -659,9 +660,12 @@ describe('PaymentService', () => {
         cvv: '123',
       };
 
-      const stripeError = new Error('Your card was declined');
-      (stripeError as any).type = 'StripeCardError';
-      (stripeError as any).code = 'card_declined';
+      const stripeError = new Error('Your card was declined') as Error & {
+        type: string;
+        code: string;
+      };
+      stripeError.type = 'StripeCardError';
+      stripeError.code = 'card_declined';
 
       mockStripe.paymentMethods.create.mockRejectedValue(stripeError);
 
