@@ -12,6 +12,7 @@ import { Payment, PaymentStatus } from './payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CardDataDto } from './dto/card-data.dto';
 import { ChargeDto } from './dto/charge.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class PaymentService {
@@ -21,6 +22,7 @@ export class PaymentService {
     @InjectRepository(Payment)
     private readonly repo: Repository<Payment>,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {
     const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (stripeSecretKey) {
@@ -114,7 +116,44 @@ export class PaymentService {
       return payment;
     });
 
-    return this.repo.save(processedPayments);
+    const savedPayments = await this.repo.save(processedPayments);
+
+    // UC16: Send email notification for each processed payment
+    // Note: In production, this would be done via a message queue to avoid blocking
+    // and to ensure emails are sent even if the payment processing fails
+    for (const payment of savedPayments) {
+      try {
+        const emailAddress = `ciclista${payment.ciclista}@example.com`;
+        let assunto: string;
+        let mensagem: string;
+
+        if (payment.status === PaymentStatus.PAID) {
+          assunto = 'Cobrança Processada com Sucesso';
+          mensagem = `Olá,\n\nSua cobrança de R$ ${payment.valor.toFixed(2)} foi processada com sucesso.\n\nDetalhes:\n- ID da cobrança: ${payment.id}\n- Valor: R$ ${payment.valor.toFixed(2)}\n- Data: ${payment.horaFinalizacao.toLocaleString('pt-BR')}\n\nObrigado por utilizar nosso serviço!`;
+        } else {
+          assunto = 'Falha no Processamento da Cobrança';
+          mensagem = `Olá,\n\nNão foi possível processar sua cobrança de R$ ${payment.valor.toFixed(2)}.\n\nPor favor, verifique os dados do seu cartão de crédito e tente novamente.\n\nDetalhes:\n- ID da cobrança: ${payment.id}\n- Valor: R$ ${payment.valor.toFixed(2)}\n- Status: ${payment.status}\n\nEm caso de dúvidas, entre em contato conosco.`;
+        }
+
+        await this.emailService.sendEmail({
+          email: emailAddress,
+          assunto,
+          mensagem,
+        });
+
+        console.log(
+          `[UC16] Email sent to ${emailAddress} for payment ${payment.id}. Status: ${payment.status}`,
+        );
+      } catch (error) {
+        // Don't fail the entire operation if email fails
+        console.error(
+          `[UC16] Failed to send email for payment ${payment.id}:`,
+          error,
+        );
+      }
+    }
+
+    return savedPayments;
   }
 
   async findOne(id: number): Promise<Payment> {
@@ -128,17 +167,42 @@ export class PaymentService {
   async validateCreditCard(
     cardData: CardDataDto,
   ): Promise<{ valid: boolean }> {
-    // Validate basic required fields first
-    if (!cardData.nomeTitular || cardData.nomeTitular.trim() === '') {
+    // OPTION 1: If Stripe PaymentMethod ID is provided, verify it
+    if (cardData.paymentMethodId) {
+      if (!this.stripe) {
+        throw new BadRequestException(
+          'Stripe is not configured - cannot validate PaymentMethod',
+        );
+      }
+
+      try {
+        console.log('🔵 [STRIPE] Verifying PaymentMethod:', cardData.paymentMethodId);
+        // Retrieve the PaymentMethod to verify it exists and is valid
+        const paymentMethod = await this.stripe.paymentMethods.retrieve(
+          cardData.paymentMethodId,
+        );
+        console.log('✅ [STRIPE] PaymentMethod valid:', paymentMethod.id);
+        return { valid: true };
+      } catch (error: any) {
+        console.error('🔴 [STRIPE ERROR]:', error.message);
+        throw new BadRequestException(`Invalid payment method: ${error.message}`);
+      }
+    }
+
+    // OPTION 2: Local validation with card details
+    // Validate required fields
+    if (!cardData.numero || !cardData.nomeTitular || !cardData.validade || !cardData.cvv) {
+      throw new BadRequestException(
+        'Either paymentMethodId or complete card details (numero, nomeTitular, validade, cvv) are required',
+      );
+    }
+
+    if (cardData.nomeTitular.trim() === '') {
       throw new BadRequestException('Cardholder name is required');
     }
 
-    if (!cardData.numero || cardData.numero.trim() === '') {
+    if (cardData.numero.trim() === '') {
       throw new BadRequestException('Card number is required');
-    }
-
-    if (!cardData.cvv) {
-      throw new BadRequestException('Invalid CVV');
     }
 
     // Validate expiration date format
@@ -154,36 +218,13 @@ export class PaymentService {
       throw new BadRequestException('Invalid expiration date');
     }
 
-    // If Stripe is configured, use real Stripe validation
-    if (this.stripe) {
-      try {
-        // Create a PaymentMethod with Stripe to validate the card
-        // This validates the card without charging it
-        await this.stripe.paymentMethods.create({
-          type: 'card',
-          card: {
-            number: cardData.numero,
-            exp_month: month,
-            exp_year: year,
-            cvc: cardData.cvv,
-          },
-          billing_details: {
-            name: cardData.nomeTitular,
-          },
-        });
+    // Validate card not expired
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
 
-        // If PaymentMethod creation succeeds, card is valid
-        return { valid: true };
-      } catch (error: any) {
-        // Stripe will throw specific errors for invalid cards
-        if (error.type === 'StripeCardError' || error.code) {
-          throw new BadRequestException(
-            `Invalid card: ${error.message || 'Card validation failed'}`,
-          );
-        }
-        // Re-throw other errors
-        throw new BadRequestException('Card validation failed');
-      }
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+      throw new BadRequestException('Card has expired');
     }
 
     // Fallback: Local validation if Stripe not configured
@@ -219,6 +260,11 @@ export class PaymentService {
 
     // Process payment through Stripe if configured
     if (this.stripe) {
+      // Validate required card data fields
+      if (!chargeData.cardData.validade || !chargeData.cardData.numero || !chargeData.cardData.cvv) {
+        throw new BadRequestException('Complete card details are required for Stripe processing');
+      }
+
       try {
         // Parse expiration date (MM/YYYY format)
         const [expMonth, expYear] = chargeData.cardData.validade.split('/');

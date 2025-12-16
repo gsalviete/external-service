@@ -4,7 +4,7 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CardDataDto } from './dto/card-data.dto';
 import { ChargeDto } from './dto/charge.dto';
 
-@Controller('pagamento')
+@Controller()
 export class PaymentController {
   constructor(private readonly service: PaymentService) {}
 
@@ -34,7 +34,16 @@ export class PaymentController {
   @Post('validaCartaoDeCredito')
   @HttpCode(200)
   async validateCreditCard(@Body() cardData: CardDataDto) {
-    return this.service.validateCreditCard(cardData);
+    console.log('🔵 [DEBUG] Request received:', cardData);
+    try {
+      const result = await this.service.validateCreditCard(cardData);
+      console.log('✅ [DEBUG] Success:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ [DEBUG] Error:', error.message);
+      console.error('❌ [DEBUG] Stack:', error.stack);
+      throw error;
+    }
   }
 }
 

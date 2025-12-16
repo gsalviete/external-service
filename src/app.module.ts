@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
 import { PaymentModule } from './payment/payment.module';
+import { Payment } from './payment/payment.entity';
+import { Email } from './email/email.entity';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { PaymentModule } from './payment/payment.module';
           ? { rejectUnauthorized: false }
           : false,
     }),
+    TypeOrmModule.forFeature([Payment, Email]),
     EmailModule,
     PaymentModule,
   ],

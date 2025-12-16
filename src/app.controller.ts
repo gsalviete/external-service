@@ -9,4 +9,9 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('restaurarBanco')
+  async restaurarBanco(): Promise<{ message: string }> {
+    return this.appService.restaurarBanco();
+  }
 }
