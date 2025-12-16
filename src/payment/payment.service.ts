@@ -282,8 +282,17 @@ export class PaymentService {
       }
 
       try {
-        // Parse expiration date (MM/YYYY format)
-        const [expYear, expMonth] = chargeData.cardData.validade.split('-');
+        // Parse expiration date (supports both MM/YYYY and YYYY-MM formats)
+        let expMonth: string;
+        let expYear: string;
+
+        if (chargeData.cardData.validade.includes('/')) {
+          // MM/YYYY format
+          [expMonth, expYear] = chargeData.cardData.validade.split('/');
+        } else {
+          // YYYY-MM format (Stripe format)
+          [expYear, expMonth] = chargeData.cardData.validade.split('-');
+        }
 
         // Create a Payment Method
         const paymentMethod = await this.stripe.paymentMethods.create({

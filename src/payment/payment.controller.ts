@@ -34,16 +34,16 @@ export class PaymentController {
   @Post('validaCartaoDeCredito')
   @HttpCode(200)
   async validateCreditCard(@Body() cardData: CardDataDto) {
-    console.log('🔵 [DEBUG] Request received:', cardData);
+    console.log('[DEBUG] Request received:', cardData);
     try {
       const result = await this.service.validateCreditCard(cardData);
-      console.log('✅ [DEBUG] Success:', result);
+      console.log('[DEBUG] Success:', result);
       return result;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       const stack = error instanceof Error ? error.stack : undefined;
-      console.error('❌ [DEBUG] Error:', message);
-      console.error('❌ [DEBUG] Stack:', stack);
+      console.error('[DEBUG] Error:', message);
+      console.error('[DEBUG] Stack:', stack);
       throw error;
     }
   }

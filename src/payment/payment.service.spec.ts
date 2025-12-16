@@ -211,17 +211,25 @@ describe('PaymentService', () => {
     });
 
     it('should handle email sending errors gracefully', async () => {
+      // Mock Math.random to return 0.15 (>= 0.1, should succeed)
+      jest.spyOn(Math, 'random').mockReturnValue(0.15);
+
       const payment = {
         id: 3,
         valor: 15,
         ciclista: 2,
-        status: PaymentStatus.PAID,
+        status: PaymentStatus.PENDING,
         horaSolicitacao: new Date(),
         horaFinalizacao: new Date(),
       };
 
+      const paidPayment = {
+        ...payment,
+        status: PaymentStatus.PAID,
+      };
+
       mockRepository.find.mockResolvedValue([payment]);
-      mockRepository.save.mockResolvedValue([payment]);
+      mockRepository.save.mockResolvedValue([paidPayment]);
       mockEmailService.sendEmail.mockRejectedValue(
         new Error('Email service error'),
       );
@@ -230,6 +238,8 @@ describe('PaymentService', () => {
       const result = await service.processQueue();
 
       expect(result[0].status).toBe(PaymentStatus.PAID);
+
+      jest.spyOn(Math, 'random').mockRestore();
     });
   });
 
